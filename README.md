@@ -17,7 +17,7 @@ To plot test data in a multi yAxis chart from a *.CSV format file, with Apache E
 # 需要什么工具
 * 文本编辑，微软记事本，notepad++等都可以
 * google内核的浏览器
-* 百度Echarts的一个js文件
+* 百度Echarts的一个[js文件](https://github.com/apache/echarts/blob/2e1fbbefabafa5bd2c4698aa705490d5c64aec18/dist/echarts.min.js)
 
 # 可视化图表的效果
 * 一个多y轴的多曲线图
@@ -25,6 +25,7 @@ To plot test data in a multi yAxis chart from a *.CSV format file, with Apache E
 * 有多个纵轴，对应不同类型的数据
 
 # 使用方法
+* 把百度Echarts的一个[js文件](https://github.com/apache/echarts/blob/2e1fbbefabafa5bd2c4698aa705490d5c64aec18/dist/echarts.min.js)和这个html文件放在同一目录下，在html中指向这个[js文件](https://github.com/apache/echarts/blob/2e1fbbefabafa5bd2c4698aa705490d5c64aec18/dist/echarts.min.js)
 * 用浏览器打开文件
 * 打开要可视化的数据，曲线自动生成
 * 点保存可生成曲线图片
