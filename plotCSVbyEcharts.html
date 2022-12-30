@@ -87,7 +87,7 @@
 			var plotArr= new Array();    //plotArr, a public var, used for plot 
 			//the structure of plotArr should look like a table, with its first row and column as names of values
 			//the first row can be define as user want it be
-			plotArr[0]=["Time",	"This Step",	"Step Time",	"Test Time",	"Torque (Nm)",	"Load (N)",	"Specimen Speed (rpm)",	"Specimen Temperature (degC)",	"Wear (um)",	"Friction Coefficient",	"Contact Potential (mV)",	"Gap (um)",	"Wear Offset (um)",	"Specimen Radius (mm)",	"Load Status",	"Total Revolutions (rev)"];
+			plotArr[0]=["Time",	"This Step",	"Step Time",	"Test Time",	"Torque",	"Load",	"Specimen Speed",	"Specimen Temperature ",	"Wear",	"Friction Coefficient",	"Contact Potential",	"Gap ",	"Wear Offset",	"Specimen Radius ",	"Load Status",	"Total Revolutions"];
 			//show() is used for showing test info getting from 1st 15 lines
 				
 			data=this.result;		//get text		
@@ -157,7 +157,7 @@
 					}
 				},
 				//title
-				title:{text: [titleInfo[0].slice(6,16),'  |  ',titleInfo[1].slice(9,titleInfo[1].length),'        1.4m/s 1000rpm\n',titleInfo[4],'   ',titleInfo[5],'    ',titleInfo[2].slice(12,titleInfo[2].length),logospace,'{ml|}',].join(''),
+				title:{text: [titleInfo[0].slice(6,16),'  |  ',titleInfo[1].slice(9,titleInfo[1].length),'        testinfo\n',titleInfo[4],'   ',titleInfo[5],'    ',titleInfo[2].slice(12,titleInfo[2].length),logospace,'{ml|}',].join(''),
 				left:'5%',
 				textStyle:{
 					color:mycolor[0],
