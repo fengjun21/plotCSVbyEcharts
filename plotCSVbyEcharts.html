@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <!-- 创建纪录 -->
+    <script src="C:\echarts\echarts.min20220519.js"></script>
+  </head>
+
+<body  onload = "logo()">
+	<div>
+    <!-- draw canvas logo logo -->
+	<canvas id = "blank" width="494" height="45" ></canvas>	
+	<canvas id = "logologo" width="220" height="45" ></canvas>
+	<script type = "text/javascript">
+	function logo(){
+		if (CanvasRenderingContext2D.prototype.ellipse == undefined){
+			CanvasRenderingContext2D.prototype.ellipse = function(x, y, radiusX, radiusY, rotation, startAngle, endAngle, antiClockwise)
+				{
+					this.save();
+					this.translate(x, y);
+					this.rotate(rotation);
+					this.scale(radiusX, radiusY);
+					this.arc(0, 0, 1, startAngle, endAngle, antiClockwise);
+
+				}
+		}//end of if
+		var a=240;    //horizontal
+		var b=22;     //vertical
+		//draw yellow ellipse
+		var canvaspad = document.getElementById("logologo");
+			ctx = canvaspad.getContext('2d');
+			ctx.beginPath();
+			ctx.strokeStyle = "#FFBF00";
+			ctx.fillStyle = "#FFBF00";
+			ctx.moveTo(a,b);
+			ctx.ellipse(a-60, b, 30, 20, 0, 0, Math.PI*2, true);  //length/height =1.5
+			ctx.closePath();
+			ctx.fill();
+			
+			//draw blue ellipse
+			ctx.moveTo(a-5,b);
+			ctx.beginPath();
+			ctx.fillStyle = "#00205B";
+			ctx.ellipse(a-60, b, 26, 16, 0, 0, Math.PI*2.1, true);
+			ctx.closePath();
+			ctx.fill();
+
+			//标语
+			ctx.moveTo(a-236, b);
+			ctx.beginPath();
+			ctx.fillStyle = "#00205B";
+			ctx.font = "oblique 12px Arial Black ";
+			ctx.textBaseline = 'middle';
+			//fill text
+			var txt="标语"
+			ctx.fillText(txt, a-236, b);
+			ctx.closePath;
+
+			//logo
+			ctx.moveTo(a-81.5, b+1);
+			ctx.beginPath();
+			ctx.fillStyle = "#FFBF00";
+			ctx.font = "oblique 16px Arial Black ";
+			ctx.textBaseline = 'middle';
+			var txt="logo"
+			ctx.fillText(txt, a-81.5, b+1);
+			
+			ctx.closePath;
+	};
+	</script>
+	</div>
+	<div>
+    <!-- load data and show -->
+	<input type="file" name="file" id="filePicker" onchange="show()"  />
+	<br> 
+	<textarea id="testInfo" name="testinfor" rows="14" cols="100" readonly="readonly" style="color:rgb(35, 88, 137);font-size:14px">
+	</textarea>
+		
+	</div>
+	<!-- 为 ECharts 准备一个定义了宽高的 DOM -->
+	<div id="container" style="width: 1000px;height:600px;"></div>
+	<script type="text/javascript">
+
+	function show(){
+		var reader = new FileReader();
+		reader.onload = function(){
+			var plotArr= new Array();    //plotArr, a public var, used for plot 
+			//the structure of plotArr should look like a table, with its first row and column as names of values
+			//the first row can be define as user want it be
+			plotArr[0]=["Time",	"This Step",	"Step Time",	"Test Time",	"Torque (Nm)",	"Load (N)",	"Specimen Speed (rpm)",	"Specimen Temperature (degC)",	"Wear (um)",	"Friction Coefficient",	"Contact Potential (mV)",	"Gap (um)",	"Wear Offset (um)",	"Specimen Radius (mm)",	"Load Status",	"Total Revolutions (rev)"];
+			//show() is used for showing test info getting from 1st 15 lines
+				
+			data=this.result;		//get text		
+			dataArr=data.split("\n");    //split to lines
+			dataArr[10] = dataArr[10].replace(",,","");  //remove ",," at the beginning
+			dataArr[11] = dataArr[11].replace(",,","");  //remove ",," at the beginning
+			info = [];    //creat a container
+			//get line of test info, if not start with ","
+			for(var txtLine in dataArr){
+				if(dataArr[txtLine][0] !== ",")    //only test data lines start with comma
+				{   //in CSV, ",," creaa an empty col, change it to ":"
+					dataArr[txtLine] = dataArr[txtLine].replace(",,",": ")
+					info.push(dataArr[txtLine])
+				};
+				//0 point of wear displacement is star of step 6th, the loading step
+				if(/6,V1/.test(dataArr[txtLine])){
+					var zW = dataArr[txtLine].split(',');
+					var zeroWear = zW[9];  //the 9th value is displacement,
+					break;  //just get the first value of loading step (6th)
+				}
+				
+			};
+			console.log("zeroWear: "+zeroWear);
+			titleInfo = info.slice(6,12);
+			console.log("titleInfo: "+titleInfo);
+			info =info.join("");    //join the arr as one, otherwise the "," for seperate elements will be shown
+			info = info.slice(0,-2)    //the last line is a empty line, so delete it				
+			testInfo.value=info;    //testInfo is used by a html element "textarea" to show information	
+			//ring +disc + oil +[calculated number of Space] + logologo
+			logospace = ' '.repeat(105-titleInfo[4].length - titleInfo[5].length - titleInfo[2].length);
+			//the start of step 6 should be 0 position of displacment
+
+			//put test value to plotArr, for the line contain a number at 2nd character				
+			for(var el=1;el<dataArr.length;el++){    //the 0th element is table head
+				if(dataArr[el][1]>-1){    //if the 2nd character of any line is a number
+				//then neglect the first char ",", split this line and add to plotArr
+					plotArr.push(dataArr[el].substring(1,dataArr[el].length-2).split(","));
+					//take last row, offset time to 0 and tranfer sencond to minute
+					plotArr[plotArr.length-1][3]=(plotArr[plotArr.length-1][3]-plotArr[1][3])/60;
+					//offset wear with 0 point,have to always use "-" for offset, "+" may switch data to string
+					plotArr[plotArr.length-1][8] = plotArr[plotArr.length-1][8]-zeroWear;				
+				}
+			}
+			
+			var dom = document.getElementById("container")
+            var mlogo = document.getElementById("logologo")
+			var myChart = echarts.init(dom,null, { renderer: 'canvas' });
+			//'',          logo blue,  red,       yellow,  blue       purple
+			var mycolor = ['#00205B','#FF0000', '#FFBF00','#63B8FF','#68228B', '#7CFC00']; 
+			var mySerie =['COF', 'Temp. Setting', 'Temp. Oil', 'Temp. Ring', 'Load', 'Contact Potential', 'Wear-CDS', 'Wear Beam', 'Force Setting', 'Force']
+			//predefine the favorable colors, not necessary
+
+
+			//define the properties and values for chart:
+			option = {
+				//color: mycolor,    //get color from predefined colors
+				tooltip: {//tooltip wanted
+					trigger: 'axis',
+					axisPointer: {type: 'cross'}
+				},
+				toolbox: {//tools needed
+					feature: {
+						dataZoom:   {yAxisIndex: 'none'},
+									dataView: { readOnly: true },
+									restore: {},
+									saveAsImage: {pixelRatio:2,name:titleInfo[0]+titleInfo[1]}
+					}
+				},
+				//title
+				title:{text: [titleInfo[0].slice(6,16),'  |  ',titleInfo[1].slice(9,titleInfo[1].length),'        1.4m/s 1000rpm\n',titleInfo[4],'   ',titleInfo[5],'    ',titleInfo[2].slice(12,titleInfo[2].length),logospace,'{ml|}',].join(''),
+				left:'5%',
+				textStyle:{
+					color:mycolor[0],
+					fontWeight:'normal',
+					rich:{
+						ml:{fontSize:1,					
+							backgroundColor:{image:mlogo},
+							width:220,  //same width as canvas logologo  
+							height:45   //same height as canvas logologo
+						}
+					}
+				}
+				},
+				//legend
+				legend: {
+					data:mySerie,
+					lineStyle: {width: 4},
+					top: '12%',left: '5%'
+				},
+				//data source
+				dataset:{source: plotArr},   //dataset get from plotArr
+							
+				grid:{borderWidth: 5, top: '20%', left:'5%', right:'20%'},
+				textStyle:{fontSize:18},
+				//properties of xAxis
+				xAxis: [{   
+					type: 'value',
+					name: '\n\n min',
+					nameTextStyle:{fontSize: 17.5, verticalAlign: 'middle'},
+					axisLine: {lineStyle: { color: mycolor[0], width: 2} },					
+					axisTick: {lineStyle: {width: 2}, alignWithLabel: true}, 
+					axisLabel: {fontSize: 18},
+					splitLine:{show:true} //show or hide grid
+						
+				}],
+				//properties of yAxis
+				yAxis: [
+					{//1st yAxis
+						type: 'value',
+						name: 'COF',
+						nameTextStyle:{align: 'right'},
+						 min: 0,
+						max: 0.3,
+						position: 'left',
+						axisLine: {   lineStyle: {color: mycolor[0], width: 2}   },
+						axisTick: {	  lineStyle: {width: 2} },
+						axisLabel: {fontSize: 16},
+						splitLine:{show:false} 
+					},    //1st yAxis
+					
+					{//2nd yAxis
+						type: 'value',
+						name: '℃', //mySerie[2],
+						nameTextStyle:{align: 'left'},
+						min: 40,
+						max: 240,
+						position: 'right',
+						offset: 0,
+						axisLine: {   lineStyle: {color: mycolor[1], width: 2}  },
+						axisTick: {   lineStyle: {width: 2}},
+						axisLabel: {fontSize: 16},
+						splitNumber: 10,
+						splitLine:{show:true} 
+					},
+					{//3rd yAxis
+						type: 'value',
+						name: 'MPa',  //mySerie[4],
+						nameTextStyle:{align: 'left'},
+						min: 0,
+						max: 40,
+						position: 'right',
+						offset: 50,
+						axisLine: {   lineStyle: {color: mycolor[2], width: 2}   },
+						axisTick: {   lineStyle: {width: 2}},
+						axisLabel: {fontSize: 16},
+						splitNumber: 10,
+						splitLine:{show:false} 
+					},
+					{//4th yAxis
+						type: 'value',
+						name: 'mV', //mySerie[5],
+						nameTextStyle:{align: 'left'},
+						min: 0,
+						max: 80,
+						position: 'right',
+						offset: 100,
+						axisLine: {   lineStyle: {  color: mycolor[3], width: 2}  },
+						axisTick: {   lineStyle: {width: 2}},
+						axisLabel: {fontSize: 16},
+						splitNumber: 10,
+						splitLine:{show:false} 
+					},
+					{//5th yAxis
+						type: 'value',
+						name: 'μm',    //mySerie[6],
+						nameTextStyle:{align: 'left'},
+						min: 0,
+						max: 200,
+						position: 'right',
+						offset: 150,
+						axisLine: {   lineStyle: {color: mycolor[4], width: 2}  },
+						axisTick: {   lineStyle: {width: 2}},
+						axisLabel: {fontSize: 16},
+						splitNumber: 10,
+						splitLine:{show:false} 
+					},
+/*					{//6th yAxis
+						type: 'value',
+						name: 'N',    //mySerie[6],
+						nameTextStyle:{align: 'left'},
+						//min: 0,
+						//max: 200,
+						position: 'right',
+						offset: 200,
+						axisLine: {   lineStyle: {color: mycolor[5], width: 2}  },
+						axisTick: {   lineStyle: {width: 2}},
+						axisLabel: {fontSize: 16},
+						splitNumber: 10,
+						splitLine:{show:false} 
+					},*/
+					
+				],
+				//defined values for plot
+				series: [
+					{//data1 COF
+						name:mySerie[0],
+						type:'line',
+						itemStyle:{color: mycolor[0]},
+						showSymbol: false,
+						lineStyle:{ width:1, color: mycolor[0]},
+						encode:{x:3,y:12}            
+					},
+/*					{//data2 temp setting point
+						name:mySerie[1],
+						type:'line',
+						itemStyle:{color: mycolor[1]},
+						showSymbol: false,
+						yAxisIndex: 1,
+						lineStyle:{type: 'dashed', width:1, color: mycolor[1]},
+						encode:{x:3,y:5}  
+					},*/
+					{//data3 oil temp
+						name:mySerie[2],
+						type:'line',
+						itemStyle:{color: mycolor[1]},
+						showSymbol: false,
+						yAxisIndex: 1,
+						lineStyle:{width:2, color: mycolor[1]},
+						encode:{x:3,y:11}  
+					},
+					{//data4 ring temp
+						name:mySerie[3],
+						type:'line',
+						itemStyle:{color: mycolor[1]},
+						showSymbol: false,
+						yAxisIndex: 1,
+						lineStyle:{width:1, color: mycolor[1]},
+						encode:{x:3,y:14}  
+					},
+					{//data5 load
+						name:mySerie[4],
+						type:'line',
+						itemStyle:{color: mycolor[2]},
+						showSymbol: false,
+						yAxisIndex: 2,			
+						lineStyle:{width:2, color: mycolor[2]},
+						encode:{x:3,y:7}  
+					},
+					{//data6 CP
+						name:mySerie[5],
+						type:'line',
+						itemStyle:{color: mycolor[3]},
+						showSymbol: false,
+						yAxisIndex: 3,
+						lineStyle:{width:1, color: mycolor[3]},
+						encode:{x:3,y:15}  
+					},
+/*					{//data7 wear-CDS
+						name:mySerie[6],
+						type:'line',
+						itemStyle:{color: mycolor[4]},
+						showSymbol: false,
+						yAxisIndex: 4,			
+						lineStyle:{width:1, color: mycolor[4]},
+						encode:{x:3,y:13}  
+					},*/
+					{//data8 wear-Beam
+						name:mySerie[7],
+						type:'line',
+						itemStyle:{color: mycolor[4]},
+						showSymbol: false,
+						yAxisIndex: 4,			
+						lineStyle:{width:1, color: mycolor[4]},
+						encode:{x:3,y:8}
+					},
+/*					  {//data9 Load setting point in N
+						name:mySerie[8],
+						type:'line',
+						itemStyle:{color: mycolor[5]},
+						showSymbol: false,
+						yAxisIndex: 5,			
+						lineStyle:{type: 'dashed', width:1, color: mycolor[5]},
+						encode:{x:3,y:4}  
+					},
+					  {//data10 Load in N
+						name:mySerie[9],
+						type:'line',
+						itemStyle:{color: mycolor[5]},
+						showSymbol: false,
+						yAxisIndex: 5,			
+						lineStyle:{width:2, color: mycolor[5]},
+						encode:{x:3,y:10}  
+					},*/
+				]
+			};
+				if (option && typeof option === "object") {
+					myChart.setOption(option, true);
+				}
+					
+								
+		}  //end of reader.onload			
+		//pick file
+		var f = document.getElementById("filePicker").files[0];
+		reader.readAsText(f);	
+	};  //end of function show()
+
+</script>
+</body>
+</html>
